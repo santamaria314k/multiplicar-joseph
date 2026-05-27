@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Juego de Multiplicaciones</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f7f9fc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 15px;
+            color: #333;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .score-board {
+            background-color: #2ec4b6;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(46, 196, 182, 0.3);
+        }
+
+        /* Contenedor principal adaptativo */
+        .game-card {
+            background: white;
+            padding: 25px 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 360px; /* Tamaño ideal para cualquier pantalla móvil */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* El bloque de la operación que imita al cuaderno cuadrático */
+        .math-operation {
+            font-family: 'Courier New', Courier, monospace; /* Crucial para que todas las letras/números midan lo mismo */
+            font-size: 2.2rem; /* Tamaño grande y legible en teléfonos */
+            font-weight: bold;
+            display: inline-block;
+            text-align: right;
+            line-height: 1.4;
+            padding-right: 10px;
+        }
+
+        .row {
+            display: block;
+            position: relative;
+            letter-spacing: 6px; /* Espaciado uniforme entre dígitos */
+            margin-bottom: 4px;
+        }
+
+        .operator {
+            color: #e71d36;
+            margin-right: 15px;
+            display: inline-block;
+        }
+
+        .line {
+            border-top: 3px solid #333;
+            margin: 8px 0;
+            width: 100%;
+        }
+
+        .double-line {
+            border-top: 4px double #333;
+            margin: 8px 0;
+            width: 100%;
+        }
+
+        /* Inputs ultra-optimizados para alineación vertical */
+        input {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 2.2rem;
+            font-weight: bold;
+            text-align: right;
+            border: 1px dashed #b2bec3;
+            background-color: #fbfbfb;
+            border-radius: 6px;
+            width: 100%;
+            max-width: 180px; /* Ancho controlado para que no se desplace */
+            padding: 2px 5px;
+            letter-spacing: 6px;
+            outline: none;
+            color: #2d3436;
+        }
+
+        input:focus {
+            border: 2px solid #ff9f1c;
+            background-color: #fffdf9;
+        }
+
+        .final-input {
+            color: #e71d36; /* Color rojo destacado para el resultado, igual que la app de la foto */
+        }
+
+        /* Quitar flechas por defecto de los inputs de número */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        .btn {
+            background-color: #ff9f1c;
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1.1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(255, 159, 28, 0.4);
+            transition: background 0.2s;
+            -webkit-tap-highlight-color: transparent; /* Elimina parpadeo azul en móviles */
+        }
+
+        .btn:active {
+            background-color: #f18f01;
+            transform: scale(0.98);
+        }
+
+        .feedback {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-top: 15px;
+            text-align: center;
+            min-height: 24px;
+        }
+
+        .correct { color: #2ec4b6; }
+        .incorrect { color: #e71d36; }
+
+        /* Ajustes específicos para pantallas extremadamente pequeñas */
+        @media (max-width: 340px) {
+            .math-operation, input {
+                font-size: 1.8rem;
+            }
+            input {
+                max-width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Reto Matemático de Vertical</h1>
+    
+    <div class="score-board">
+        Puntos: <span id="score">0</span>
+    </div>
+
+    <div class="game-card">
+        <div class="math-operation">
+            <div class="row" id="num1">000</div>
+            
+            <div class="row"><span class="operator">×</span><span id="num2">00</span></div>
+            
+            <div class="line"></div>
+            
+            <div class="row">
+                <input type="number" id="step1" inputmode="numeric" placeholder="---" autocomplete="off">
+            </div>
+            
+            <div class="row">
+                <input type="number" id="step2" inputmode="numeric" placeholder="---0" autocomplete="off">
+            </div>
+            
+            <div class="double-line"></div>
+            
+            <div class="row">
+                <input type="number" id="final" class="final-input" inputmode="numeric" placeholder="-----" autocomplete="off">
+            </div>
+        </div>
+
+        <button class="btn" onclick="verificarRespuesta()">Comprobar Resultado</button>
+        <div id="feedback" class="feedback"></div>
+    </div>
+
+    <script>
+        let puntos = 0;
+        let factor1, factor2;
+        let respuestaPaso1, respuestaPaso2, respuestaFinal;
+
+        function generarProblema() {
+            // 3 cifras (100 - 999)
+            factor1 = Math.floor(Math.random() * 900) + 100;
+            // 2 cifras (10 - 99)
+            factor2 = Math.floor(Math.random() * 90) + 10;
+
+            let unidades = factor2 % 10;
+            let decenas = Math.floor(factor2 / 10);
+
+            // Operaciones exactas esperadas en el cuaderno
+            respuestaPaso1 = factor1 * unidades;
+            respuestaPaso2 = factor1 * decenas * 10; // Incluye el espacio/cero de la decena移
+            respuestaFinal = factor1 * factor2;
+
+            document.getElementById('num1').innerText = factor1;
+            document.getElementById('num2').innerText = factor2;
+
+            // Resetear entradas
+            document.getElementById('step1').value = '';
+            document.getElementById('step2').value = '';
+            document.getElementById('final').value = '';
+            
+            // Resetear estilos
+            document.getElementById('feedback').innerText = '';
+            resetStyle('step1');
+            resetStyle('step2');
+            resetStyle('final');
+        }
+
+        function resetStyle(id) {
+            let el = document.getElementById(id);
+            el.style.borderColor = '#b2bec3';
+            el.style.backgroundColor = '#fbfbfb';
+        }
+
+        function marcarError(id) {
+            let el = document.getElementById(id);
+            el.style.borderColor = '#e71d36';
+            el.style.backgroundColor = '#ffeef0';
+        }
+
+        function marcarCorrecto(id) {
+            let el = document.getElementById(id);
+            el.style.borderColor = '#2ec4b6';
+            el.style.backgroundColor = '#f0fdfa';
+        }
+
+        function verificarRespuesta() {
+            let usrPaso1 = parseInt(document.getElementById('step1').value);
+            let usrPaso2 = parseInt(document.getElementById('step2').value);
+            let usrFinal = parseInt(document.getElementById('final').value);
+
+            let todoCorrecto = true;
+
+            // Validar primer nivel
+            if (usrPaso1 === respuestaPaso1) {
+                marcarCorrecto('step1');
+            } else {
+                marcarError('step1');
+                todoCorrecto = false;
+            }
+
+            // Validar segundo nivel
+            if (usrPaso2 === respuestaPaso2) {
+                marcarCorrecto('step2');
+            } else {
+                marcarError('step2');
+                todoCorrecto = false;
+            }
+
+            // Validar resultado final (Suma)
+            if (usrFinal === respuestaFinal) {
+                marcarCorrecto('final');
+            } else {
+                marcarError('final');
+                todoCorrecto = false;
+            }
+
+            let feedbackDiv = document.getElementById('feedback');
+
+            if (todoCorrecto) {
+                puntos++;
+                document.getElementById('score').innerText = puntos;
+                feedbackDiv.innerHTML = '<span class="correct">¡Excelente! Todo está perfecto. +1 punto</span>';
+                
+                // Espera 2 segundos y pasa a la siguiente multiplicación aleatoria
+                setTimeout(generarProblema, 2000);
+            } else {
+                feedbackDiv.innerHTML = '<span class="incorrect">¡Revisa los recuadros rojos e inténtalo de nuevo!</span>';
+            }
+        }
+
+        window.onload = generarProblema;
+    </script>
+</body>
+</html>
