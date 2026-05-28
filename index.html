@@ -5,15 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Juego de Multiplicaciones</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: #f7f9fc;
+            background: linear-gradient(135deg, #e0f7fa 0%, #f7f9fc 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -38,94 +34,148 @@
             font-size: 1.2rem;
             font-weight: bold;
             margin-bottom: 15px;
-            box-shadow: 0 4px 10px rgba(46, 196, 182, 0.3);
+            box-shadow: 0 4px 10px rgba(46,196,182,0.3);
         }
 
-        /* Contenedor principal adaptativo */
         .game-card {
             background: white;
-            padding: 25px 20px;
+            padding: 25px 20px 20px;
             border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
             width: 100%;
-            max-width: 360px; /* Tamaño ideal para cualquier pantalla móvil */
+            max-width: 400px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        /* El bloque de la operación que imita al cuaderno cuadrático */
-        .math-operation {
-            font-family: 'Courier New', Courier, monospace; /* Crucial para que todas las letras/números midan lo mismo */
-            font-size: 2.2rem; /* Tamaño grande y legible en teléfonos */
-            font-weight: bold;
-            display: inline-block;
-            text-align: right;
-            line-height: 1.4;
-            padding-right: 10px;
-        }
-
-        .row {
-            display: block;
-            position: relative;
-            letter-spacing: 6px; /* Espaciado uniforme entre dígitos */
-            margin-bottom: 4px;
-        }
-
-        .operator {
-            color: #e71d36;
-            margin-right: 15px;
-            display: inline-block;
-        }
-
-        .line {
-            border-top: 3px solid #333;
-            margin: 8px 0;
+        /*
+          ══════════════════════════════════════════
+          BLOQUE DE OPERACIÓN
+          Usamos CSS Grid para que cada "columna"
+          de dígitos quede perfectamente alineada
+          verticalmente: llevando2 / llevando1 / número
+          ══════════════════════════════════════════
+        */
+        .op-block {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
             width: 100%;
-        }
-
-        .double-line {
-            border-top: 4px double #333;
-            margin: 8px 0;
-            width: 100%;
-        }
-
-        /* Inputs ultra-optimizados para alineación vertical */
-        input {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 2.2rem;
             font-weight: bold;
-            text-align: right;
-            border: 1px dashed #b2bec3;
-            background-color: #fbfbfb;
-            border-radius: 6px;
+        }
+
+        /* Cada fila de la operación */
+        .op-row {
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-end;
             width: 100%;
-            max-width: 180px; /* Ancho controlado para que no se desplace */
-            padding: 2px 5px;
-            letter-spacing: 6px;
-            outline: none;
+            line-height: 1;
+        }
+
+        /* ── Filas de LLEVANDO ──
+           Dos filas apiladas ENCIMA del factor1.
+           Cada celda ocupa exactamente el mismo ancho
+           que un dígito del número principal.
+        */
+        .carry-row {
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-end;
+            width: 100%;
+            min-height: 1.1rem;
+        }
+
+        .carry-cell {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.75rem;
+            font-weight: bold;
+            line-height: 1;
+            width: 1.55rem;       /* ← mismo ancho que CH_WIDTH abajo */
+            text-align: center;
+            /* color se pone por clase: .c1 rojo, .c2 azul */
+        }
+        .carry-cell.c1 { color: #e71d36; }   /* paso 1 */
+        .carry-cell.c2 { color: #0984e3; }   /* paso 2 */
+        .carry-cell.empty { opacity: 0; }     /* ocultar ceros */
+
+        /* ── Número factor1 y factor2 ── */
+        .dig {
+            font-size: 2rem;
             color: #2d3436;
+            width: 1.55rem;        /* CH_WIDTH: ancho fijo por dígito */
+            text-align: center;
+            display: inline-block;
         }
 
-        input:focus {
-            border: 2px solid #ff9f1c;
-            background-color: #fffdf9;
+        .op-sign {
+            font-size: 2rem;
+            color: #e71d36;
+            width: 1.55rem;
+            text-align: center;
+            display: inline-block;
         }
 
-        .final-input {
-            color: #e71d36; /* Color rojo destacado para el resultado, igual que la app de la foto */
+        /* ── Líneas ── */
+        .op-line        { border-top: 3px solid #333;  width: 100%; margin: 5px 0; }
+        .op-double-line { border-top: 4px double #333; width: 100%; margin: 5px 0; }
+
+        /* ── INPUTS contenteditable ──
+           text-align:right → al escribir, el cursor queda
+           a la derecha y los dígitos se van a la izquierda.
+        */
+        .digit-input {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 2rem;
+            font-weight: bold;
+            letter-spacing: 3px;
+            text-align: right;
+            direction: ltr;
+            border: 2px dashed #b2bec3;
+            border-radius: 6px;
+            background: #fbfbfb;
+            color: #2d3436;
+            padding: 1px 6px;
+            min-width: 3.5rem;
+            max-width: 230px;
+            outline: none;
+            cursor: text;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .digit-input:focus     { border: 2px solid #ff9f1c; background: #fffdf9; }
+        .digit-input.ok        { border-color: #2ec4b6 !important; background: #f0fdfa !important; }
+        .digit-input.err       { border-color: #e71d36 !important; background: #ffeef0 !important; }
+        .digit-input.resultado { color: #e71d36; }
+
+        /* Cero fijo gris en paso 2 */
+        .ghost-zero {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #aaa;
+            display: inline-block;
+            width: 1.55rem;
+            text-align: center;
         }
 
-        /* Quitar flechas por defecto de los inputs de número */
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
+        /* ── Leyenda de colores ── */
+        .legend {
+            display: flex;
+            gap: 12px;
+            font-size: 0.72rem;
+            color: #636e72;
+            margin-bottom: 6px;
+            align-self: flex-end;
         }
-        input[type=number] {
-            -moz-appearance: textfield;
-        }
+        .legend span { display: flex; align-items: center; gap: 4px; }
+        .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+        .dot.c1 { background: #e71d36; }
+        .dot.c2 { background: #0984e3; }
 
+        /* ── Botón ── */
         .btn {
             background-color: #ff9f1c;
             color: white;
@@ -134,174 +184,278 @@
             font-size: 1.1rem;
             border-radius: 12px;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 18px;
             font-weight: bold;
             width: 100%;
-            box-shadow: 0 5px 15px rgba(255, 159, 28, 0.4);
+            box-shadow: 0 5px 15px rgba(255,159,28,0.4);
             transition: background 0.2s;
-            -webkit-tap-highlight-color: transparent; /* Elimina parpadeo azul en móviles */
+            -webkit-tap-highlight-color: transparent;
         }
-
-        .btn:active {
-            background-color: #f18f01;
-            transform: scale(0.98);
-        }
+        .btn:active { background-color: #f18f01; transform: scale(0.98); }
 
         .feedback {
             font-size: 1rem;
             font-weight: bold;
-            margin-top: 15px;
+            margin-top: 12px;
             text-align: center;
             min-height: 24px;
         }
-
-        .correct { color: #2ec4b6; }
+        .correct   { color: #2ec4b6; }
         .incorrect { color: #e71d36; }
 
-        /* Ajustes específicos para pantallas extremadamente pequeñas */
         @media (max-width: 340px) {
-            .math-operation, input {
-                font-size: 1.8rem;
-            }
-            input {
-                max-width: 150px;
-            }
+            .dig, .op-sign, .ghost-zero, .digit-input { font-size: 1.65rem; }
+            .dig, .op-sign, .ghost-zero, .carry-cell { width: 1.3rem; }
         }
     </style>
 </head>
 <body>
 
-    <h1>Reto Matemático de Vertical</h1>
-    
-    <div class="score-board">
-        Puntos: <span id="score">0</span>
+<h1>Reto Matemático Vertical</h1>
+<div class="score-board">Puntos: <span id="score">0</span></div>
+
+<div class="game-card">
+
+    <!-- Leyenda de colores -->
+    <div class="legend">
+        <span><span class="dot c1"></span> Llevo ×unidades</span>
+        <span><span class="dot c2"></span> Llevo ×decenas</span>
     </div>
 
-    <div class="game-card">
-        <div class="math-operation">
-            <div class="row" id="num1">000</div>
-            
-            <div class="row"><span class="operator">×</span><span id="num2">00</span></div>
-            
-            <div class="line"></div>
-            
-            <div class="row">
-                <input type="number" id="step1" inputmode="numeric" placeholder="---" autocomplete="off">
-            </div>
-            
-            <div class="row">
-                <input type="number" id="step2" inputmode="numeric" placeholder="---0" autocomplete="off">
-            </div>
-            
-            <div class="double-line"></div>
-            
-            <div class="row">
-                <input type="number" id="final" class="final-input" inputmode="numeric" placeholder="-----" autocomplete="off">
-            </div>
-        </div>
-
-        <button class="btn" onclick="verificarRespuesta()">Comprobar Resultado</button>
-        <div id="feedback" class="feedback"></div>
+    <div class="op-block" id="op-block">
+        <!-- Construido por JS -->
     </div>
 
-    <script>
-        let puntos = 0;
-        let factor1, factor2;
-        let respuestaPaso1, respuestaPaso2, respuestaFinal;
+    <button class="btn" onclick="verificarRespuesta()">Comprobar Resultado</button>
+    <div id="feedback" class="feedback"></div>
+</div>
 
-        function generarProblema() {
-            // 3 cifras (100 - 999)
-            factor1 = Math.floor(Math.random() * 900) + 100;
-            // 2 cifras (10 - 99)
-            factor2 = Math.floor(Math.random() * 90) + 10;
+<script>
+/* ═══════════════════════════════════════
+   ESTADO
+   ═══════════════════════════════════════ */
+let puntos = 0;
+let factor1, factor2;
+let respPaso1, respPaso2, respFinal;
 
-            let unidades = factor2 % 10;
-            let decenas = Math.floor(factor2 / 10);
+/*
+  calcularCarry(multiplicando, digitoMult)
+  ─────────────────────────────────────────
+  Devuelve un array de longitud (cifras_factor1 + 1),
+  indexado de IZQUIERDA a DERECHA (igual que se lee el número).
+  carries[i] = lo que se lleva HACIA la columna i desde la derecha.
+  La columna 0 es la más a la izquierda.
 
-            // Operaciones exactas esperadas en el cuaderno
-            respuestaPaso1 = factor1 * unidades;
-            respuestaPaso2 = factor1 * decenas * 10; // Incluye el espacio/cero de la decena移
-            respuestaFinal = factor1 * factor2;
+  Ejemplo: 347 × 6
+    col: 0(centenas) 1(decenas) 2(unidades)
+    Unid: 7×6=42 → escribe 2, lleva 4  → carries[1]=4  (lleva hacia decenas)
+    Dec:  4×6=24+4=28 → escribe 8, lleva 2 → carries[0]=2 (lleva hacia centenas)
+    Cent: 3×6=18+2=20 → escribe 0, lleva 2 → carries[-1]=2 (overflow, = cifra extra)
+  Array resultado (izq→der): [2, 4, 0]
+  El 2 sobrante se ignora (ya forma parte del dígito extra del resultado).
+*/
+function calcularCarry(multiplicando, digitoMult) {
+    const digs = String(multiplicando).split('').map(Number); // izq→der
+    const n = digs.length;
+    const carries = new Array(n).fill(0);
+    let acarreo = 0;
+    // recorremos de derecha a izquierda
+    for (let i = n - 1; i >= 0; i--) {
+        const prod = digs[i] * digitoMult + acarreo;
+        acarreo = Math.floor(prod / 10);
+        // El acarreo generado en columna i se "lleva" a la columna i-1
+        if (i - 1 >= 0) carries[i - 1] = acarreo;
+    }
+    return carries; // izq→der, carries[i] = llevo que recibe la columna i
+}
 
-            document.getElementById('num1').innerText = factor1;
-            document.getElementById('num2').innerText = factor2;
+/* ═══════════════════════════════════════
+   GENERACIÓN
+   ═══════════════════════════════════════ */
+function generarProblema() {
+    factor1 = Math.floor(Math.random() * 900) + 100;
+    factor2 = Math.floor(Math.random() * 90)  + 10;
 
-            // Resetear entradas
-            document.getElementById('step1').value = '';
-            document.getElementById('step2').value = '';
-            document.getElementById('final').value = '';
-            
-            // Resetear estilos
-            document.getElementById('feedback').innerText = '';
-            resetStyle('step1');
-            resetStyle('step2');
-            resetStyle('final');
-        }
+    const unidades = factor2 % 10;
+    const decenas  = Math.floor(factor2 / 10);
 
-        function resetStyle(id) {
-            let el = document.getElementById(id);
-            el.style.borderColor = '#b2bec3';
-            el.style.backgroundColor = '#fbfbfb';
-        }
+    respPaso1 = factor1 * unidades;
+    respPaso2 = factor1 * decenas;   // sin ×10 — el 0 se muestra fijo
+    respFinal = factor1 * factor2;
 
-        function marcarError(id) {
-            let el = document.getElementById(id);
-            el.style.borderColor = '#e71d36';
-            el.style.backgroundColor = '#ffeef0';
-        }
+    const carry1 = calcularCarry(factor1, unidades);
+    const carry2 = calcularCarry(factor1, decenas);
 
-        function marcarCorrecto(id) {
-            let el = document.getElementById(id);
-            el.style.borderColor = '#2ec4b6';
-            el.style.backgroundColor = '#f0fdfa';
-        }
+    document.getElementById('feedback').innerHTML = '';
+    construirDOM(carry1, carry2);
+}
 
-        function verificarRespuesta() {
-            let usrPaso1 = parseInt(document.getElementById('step1').value);
-            let usrPaso2 = parseInt(document.getElementById('step2').value);
-            let usrFinal = parseInt(document.getElementById('final').value);
+/* ═══════════════════════════════════════
+   CONSTRUCCIÓN DEL DOM
+   ═══════════════════════════════════════ */
+function construirDOM(carry1, carry2) {
+    const bloque = document.getElementById('op-block');
+    bloque.innerHTML = '';
 
-            let todoCorrecto = true;
+    const f1digs = String(factor1).split(''); // ['3','4','7']
+    const f2digs = String(factor2).split('');
+    const n = f1digs.length; // 3 para un número de 3 cifras
 
-            // Validar primer nivel
-            if (usrPaso1 === respuestaPaso1) {
-                marcarCorrecto('step1');
-            } else {
-                marcarError('step1');
-                todoCorrecto = false;
-            }
+    /* ── Fila llevando PASO 2 (encima de todo, en azul) ── */
+    bloque.appendChild(filaCarry(carry2, 'c2', n));
 
-            // Validar segundo nivel
-            if (usrPaso2 === respuestaPaso2) {
-                marcarCorrecto('step2');
-            } else {
-                marcarError('step2');
-                todoCorrecto = false;
-            }
+    /* ── Fila llevando PASO 1 (debajo del anterior, en rojo) ── */
+    bloque.appendChild(filaCarry(carry1, 'c1', n));
 
-            // Validar resultado final (Suma)
-            if (usrFinal === respuestaFinal) {
-                marcarCorrecto('final');
-            } else {
-                marcarError('final');
-                todoCorrecto = false;
-            }
+    /* ── Factor 1 ── */
+    const rowF1 = div('op-row');
+    f1digs.forEach(d => {
+        const s = span('dig'); s.textContent = d; rowF1.appendChild(s);
+    });
+    bloque.appendChild(rowF1);
 
-            let feedbackDiv = document.getElementById('feedback');
+    /* ── Factor 2 con operador × ── */
+    const rowF2 = div('op-row');
+    // Relleno con espacios a la izquierda si f2 tiene menos cifras
+    const pad = n - f2digs.length; // 3-2=1 para alinear a la derecha
+    for (let i = 0; i < pad - 1; i++) {
+        const s = span('dig'); s.textContent = '\u00A0'; rowF2.appendChild(s);
+    }
+    const opSpan = span('op-sign'); opSpan.textContent = '×'; rowF2.appendChild(opSpan);
+    f2digs.forEach(d => {
+        const s = span('dig'); s.textContent = d; rowF2.appendChild(s);
+    });
+    bloque.appendChild(rowF2);
 
-            if (todoCorrecto) {
-                puntos++;
-                document.getElementById('score').innerText = puntos;
-                feedbackDiv.innerHTML = '<span class="correct">¡Excelente! Todo está perfecto. +1 punto</span>';
-                
-                // Espera 2 segundos y pasa a la siguiente multiplicación aleatoria
-                setTimeout(generarProblema, 2000);
-            } else {
-                feedbackDiv.innerHTML = '<span class="incorrect">¡Revisa los recuadros rojos e inténtalo de nuevo!</span>';
-            }
-        }
+    /* ── Línea simple ── */
+    bloque.appendChild(lineaDiv('op-line'));
 
-        window.onload = generarProblema;
-    </script>
+    /* ── Paso 1: input ── */
+    const rowP1 = div('op-row'); rowP1.style.marginBottom = '2px';
+    rowP1.appendChild(crearInput('step1', ''));
+    bloque.appendChild(rowP1);
+
+    /* ── Paso 2: input + cero fijo ── */
+    const rowP2 = div('op-row'); rowP2.style.marginBottom = '2px';
+    rowP2.appendChild(crearInput('step2', ''));
+    const gz = span('ghost-zero'); gz.textContent = '0'; rowP2.appendChild(gz);
+    bloque.appendChild(rowP2);
+
+    /* ── Doble línea ── */
+    bloque.appendChild(lineaDiv('op-double-line'));
+
+    /* ── Resultado final: input ── */
+    const rowRes = div('op-row');
+    rowRes.appendChild(crearInput('final', 'resultado'));
+    bloque.appendChild(rowRes);
+
+    // Foco al primer input
+    document.getElementById('step1').focus();
+}
+
+/* Helpers de creación de elementos */
+function div(cls)  { const el = document.createElement('div');  el.className = cls; return el; }
+function span(cls) { const el = document.createElement('span'); el.className = cls; return el; }
+function lineaDiv(cls) { const el = div(cls); return el; }
+
+function filaCarry(carries, colorClass, nDigs) {
+    /*
+      carries tiene longitud = nDigs, indexado izq→der.
+      Cada celda se alinea con el dígito correspondiente del factor1.
+    */
+    const row = div('carry-row');
+    for (let i = 0; i < nDigs; i++) {
+        const cell = document.createElement('span');
+        const val = carries[i];
+        cell.className = 'carry-cell ' + colorClass + (val === 0 ? ' empty' : '');
+        cell.textContent = val === 0 ? '0' : String(val);
+        row.appendChild(cell);
+    }
+    return row;
+}
+
+function crearInput(id, extraClass) {
+    const el = document.createElement('div');
+    el.id              = id;
+    el.className       = 'digit-input ' + extraClass;
+    el.contentEditable = 'true';
+    el.inputMode       = 'numeric';
+    el.dataset.value   = '';
+    el.addEventListener('keydown', manejarTecla);
+    el.addEventListener('input',   sincronizarValor);
+    el.addEventListener('paste',   e => e.preventDefault());
+    return el;
+}
+
+/* ═══════════════════════════════════════
+   MANEJO DE TECLADO
+   ═══════════════════════════════════════ */
+function manejarTecla(e) {
+    const esDigito  = e.key >= '0' && e.key <= '9';
+    const esBorrar  = e.key === 'Backspace' || e.key === 'Delete';
+    const esNavegar = ['ArrowLeft','ArrowRight','Tab'].includes(e.key);
+    const esEnter   = e.key === 'Enter';
+
+    if (esEnter)   { e.preventDefault(); verificarRespuesta(); return; }
+    if (esNavegar || esBorrar) return;
+    if (!esDigito) { e.preventDefault(); return; }
+
+    if (e.target.textContent.replace(/\D/g,'').length >= 6) {
+        e.preventDefault();
+    }
+}
+
+function sincronizarValor(e) {
+    const limpio = e.target.textContent.replace(/\D/g, '');
+    if (e.target.textContent !== limpio) {
+        e.target.textContent = limpio;
+        moverCursorAlFinal(e.target);
+    }
+    e.target.dataset.value = limpio;
+}
+
+function moverCursorAlFinal(el) {
+    const range = document.createRange();
+    const sel   = window.getSelection();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+}
+
+function leer(id) {
+    const txt = (document.getElementById(id)?.textContent || '').replace(/\D/g,'');
+    return txt === '' ? NaN : parseInt(txt, 10);
+}
+
+/* ═══════════════════════════════════════
+   VERIFICACIÓN
+   ═══════════════════════════════════════ */
+function ok(id)  { const e=document.getElementById(id); if(e){e.classList.remove('err');e.classList.add('ok');} }
+function err(id) { const e=document.getElementById(id); if(e){e.classList.remove('ok');e.classList.add('err');} }
+
+function verificarRespuesta() {
+    const p1 = leer('step1');
+    const p2 = leer('step2');
+    const fi = leer('final');
+    let todo = true;
+
+    if (!isNaN(p1) && p1 === respPaso1) ok('step1'); else { err('step1'); todo = false; }
+    if (!isNaN(p2) && p2 === respPaso2) ok('step2'); else { err('step2'); todo = false; }
+    if (!isNaN(fi) && fi === respFinal)  ok('final'); else { err('final');  todo = false; }
+
+    const fb = document.getElementById('feedback');
+    if (todo) {
+        puntos++;
+        document.getElementById('score').textContent = puntos;
+        fb.innerHTML = '<span class="correct">¡Excelente! Todo está perfecto. +1 punto 🎉</span>';
+        setTimeout(generarProblema, 2200);
+    } else {
+        fb.innerHTML = '<span class="incorrect">¡Revisa los recuadros rojos e inténtalo de nuevo!</span>';
+    }
+}
+
+window.onload = generarProblema;
+</script>
 </body>
 </html>
